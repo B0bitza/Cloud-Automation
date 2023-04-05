@@ -1,73 +1,77 @@
 import tkinter as tk
+from tkinter import ttk
+import openpyxl
 import paramiko
 
+USERNAME = "user" # credidentiale temporare
+PASSWORD = "parola"
 
-# Creaza o fereastra
-root = tk.Tk()
-root.title("SSH Client")
-root.geometry("700x400")
+workbook = openpyxl.load_workbook('task3.xlsx')
+worksheet = workbook['Sheet1']
 
-username = "root" # username si parola temporare
-password = "parola"
+window = tk.Tk()
+window.title("Task3")
+window.geometry("700x400")
 
-# Creaza un dictionar cu adresele IP ale serverelor
-vm_data = { "123" : {"username": username, "password": password},
-            "124" : {"username": username, "password": password},
-            "125" : {"username": username, "password": password},
-}
 
-# Creeaza o functie pentru cautarea unei adrese IP
-def search():
-    ip_address = search_bar.get()
-    if ip_address in vm_data:
-        # Datele de autentificare pentru VM
-        username = vm_data[ip_address]["username"]
-        password = vm_data[ip_address]["password"]
-        
-        # Creaza un obiect SSHClient
-        ssh = paramiko.SSHClient()
+# Search bar and search button
+search_frame = tk.Frame(window)
+search_frame.pack(side=tk.TOP, fill=tk.X)
 
-        # Adauga cheia SSH a serverului la lista de chei cunoscute
-        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-
-        try:
-            # Conectare la server
-            ssh.connect(ip_address, username=username, password=password)
-
-            # Afiseaza mesaj de conectare reusita
-            print("Conectare reusita la", ip_address)
-
-            # Inchide conexiunea SSH
-            ssh.close()
-        except paramiko.AuthenticationException:
-            # Se afiseaza daca autentificarea a esuat
-            print("Eroare de autentificare. Verifica username-ul si parola.")
-        except paramiko.SSHException:
-            # Afiseaza orice alta exceptie SSH-related
-            print("Eroare SSH. Verifica conexiunea la retea.")
-        except Exception as e:
-            # Afiseaza orice alta exceptie
-            print("Unexpected error:", e)
-    else:
-        # Afiseaza mesaj daca adresa IP nu exista in dictionar
-        print("Adresa IP nu exista in dictionar.")
-
-# Creeaza un label pentru introducerea adresei IP
-search_label = tk.Label(root, text="Cauta VM:")
-search_bar = tk.Entry(root, width=50)
-
-# Adauga un buton search pentru cautarea adresei IP
-search_button = tk.Button(root, text="Cauta", padx=10, pady=5, command=search)
-
-# Adauga elementele in interfata grafica
+search_label = tk.Label(search_frame, text="Cauta VM:")
 search_label.grid(row=0, column=0, padx=5, pady=5, sticky='n')
-search_bar.grid(row=0, column=1, padx=5, pady=5, sticky='n', columnspan=1)
+
+search_bar = tk.Entry(search_frame, width=50)
+search_bar.grid(row=0, column=1, padx=5, pady=5, sticky='n')
+
+def clear_frame(frame):
+    for widget in frame.winfo_children():
+        widget.destroy()
+
+def ssh_connect(vm):
+    # SSH client object
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    try:
+        ssh.connect(hostname=vm, username=USERNAME, password=PASSWORD)
+        ssh_status_label.config(text=f"Conexiune SSH reusita pentru {vm}", fg="green")
+        ssh.close()
+
+    except paramiko.AuthenticationException:
+        # Displays an authentication error:
+        print("Eroare de autentificare. Verifica username-ul si parola.")
+        ssh_status_label.config(text=f"Conexiune esuata pentru {vm}. Verifica username-ul si parola.", fg="red")
+    except paramiko.SSHException:
+        # Displays any other SSH-related error:
+        print("Eroare SSH. Verifica conexiunea la retea.")
+        ssh_status_label.config(text=f"Conexiune esuata pentru {vm}. Verifica conexiunea la retea.", fg="red")
+    except Exception as e:
+        # Displays any other error:
+        print("Unexpected error:", e)
+        ssh_status_label.config(text=f"Conexiune esuata pentru {vm}. Unexpected error {e}.", fg="red")
+
+search_button = tk.Button(search_frame, text="Cauta", command="") #caici va veni functia search, command=search
 search_button.grid(row=0, column=2, padx=5, pady=5, sticky='n')
 
-root.columnconfigure(0, weight=1)
-root.columnconfigure(1, weight=1)
-root.columnconfigure(2, weight=1)
-root.rowconfigure(0, weight=1)
+ssh_status_label = tk.Label(search_frame, text="")
+ssh_status_label.grid(row=1, columnspan=3, padx=5, pady=5, sticky='n')
 
-# Ruleaza aplicatia
-root.mainloop()
+search_frame.columnconfigure(1, weight=1)
+
+# Canvas widget with scrollbar
+canvas = tk.Canvas(window)
+canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+scrollbar = ttk.Scrollbar(window, orient=tk.VERTICAL, command=canvas.yview)
+scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+canvas.configure(yscrollcommand=scrollbar.set)
+canvas.bind('<Configure>', lambda e: canvas.configure(scrollregion=canvas.bbox('all')))
+
+# Frame to hold the data
+data_frame = tk.Frame(canvas)
+
+# Add the frame to the Canvas widget
+canvas.create_window((0, 0), window=data_frame, anchor='nw')
+
+# Run the Tkinter event loop
+window.mainloop()
