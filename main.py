@@ -24,6 +24,46 @@ search_label.grid(row=0, column=0, padx=5, pady=5, sticky='n')
 search_bar = tk.Entry(search_frame, width=50)
 search_bar.grid(row=0, column=1, padx=5, pady=5, sticky='n')
 
+def search():
+    nume = search_bar.get()
+    found = False
+    for row in range(1, worksheet.max_row + 1):
+        if worksheet.cell(row=row, column=1).value == nume:
+            found = True
+            topologie = worksheet.cell(row=row, column=2).value
+            owner = worksheet.cell(row=row, column=3).value
+            vm = worksheet.cell(row=row, column=4).value
+            Mplane = worksheet.cell(row=row, column=5).value
+
+            # Clear previous search results
+            clear_frame(data_frame)
+
+            nume_label = tk.Label(data_frame, text=f"Name: {nume}")
+            nume_label.pack()
+
+            topologie_label = tk.Label(data_frame, text=f"Topologie: {topologie}")
+            topologie_label.pack()
+
+            owner_label = tk.Label(data_frame, text=f"Owner: {owner}")
+            owner_label.pack()
+
+            vm_label = tk.Label(data_frame, text=f"VM: {vm}")
+            vm_label.pack()
+
+            Mplane_label = tk.Label(data_frame, text=f"Mplane: {Mplane}")
+            Mplane_label.pack()
+
+            # SSH button for the VM
+            ssh_button = tk.Button(data_frame, text=" Connect SSH", command=lambda: ssh_connect(vm))
+            ssh_button.pack(pady=10)
+    search_not_found(found,nume)
+
+def search_not_found(found,nume):
+    if not found:
+        clear_frame(data_frame)
+        text_label = tk.Label(data_frame, text=f"Nu s-a gasit {nume}.",fg="red")
+        text_label.pack()
+
 def clear_frame(frame):
     for widget in frame.winfo_children():
         widget.destroy()
@@ -50,7 +90,7 @@ def ssh_connect(vm):
         print("Unexpected error:", e)
         ssh_status_label.config(text=f"Conexiune esuata pentru {vm}. Unexpected error {e}.", fg="red")
 
-search_button = tk.Button(search_frame, text="Cauta", command="") #caici va veni functia search, command=search
+search_button = tk.Button(search_frame, text="Cauta", command=search)
 search_button.grid(row=0, column=2, padx=5, pady=5, sticky='n')
 
 ssh_status_label = tk.Label(search_frame, text="")
