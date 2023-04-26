@@ -56,6 +56,21 @@ def search():
             # SSH button for the VM
             ssh_button = tk.Button(data_frame, text=" Connect SSH", command=lambda: ssh_connect(vm))
             ssh_button.pack(pady=10)
+            if sshConnection == True:
+                ute_ca_button = tk.Button(data_frame, text="UTE_CA", command=lambda: ssh_connect(vm))
+                ute_ca_button.pack(pady=10)
+                ute_ca_button.config(state="normal")
+                agent_button = tk.Button(data_frame, text="AGENT_GVE_COMMON", command=lambda: ssh_connect(vm))
+                agent_button.pack(pady=10)
+                agent_button.config(state="normal")
+            else:
+                ute_ca_button = tk.Button(data_frame, text="UTE_CA", command=lambda: ssh_connect(vm))
+                ute_ca_button.pack(pady=10)
+                ute_ca_button.config(state="disabled")
+                agent_button = tk.Button(data_frame, text="AGENT_GVE_COMMON", command=lambda: ssh_connect(vm))
+                agent_button.pack(pady=10)
+                agent_button.config(state="disabled")
+
     search_not_found(found,nume)
 
 def search_not_found(found,nume):
@@ -67,6 +82,8 @@ def search_not_found(found,nume):
 def clear_frame(frame):
     for widget in frame.winfo_children():
         widget.destroy()
+
+sshConnection = False
 
 def ssh_connect(vm):
     # SSH client object
@@ -95,20 +112,7 @@ def ssh_connect(vm):
         print("Unexpected error:", e)
         ssh_status_label.config(text=f"Conexiune esuata pentru {vm}. Unexpected error {e}.", fg="red")
         sshConnection = False
-    if sshConnection == True:
-        ute_ca_button = tk.Button(search_frame, text="UTE_CA", command=lambda: ssh_connect(vm))
-        ute_ca_button.grid(row=2, column=3, padx=5, pady=5, sticky='n')
-        ute_ca_button.config(state="normal")
-        agent_button = tk.Button(search_frame, text="AGENT_GVE_COMMON", command=lambda: ssh_connect(vm))
-        agent_button.grid(row=2, column=4, padx=5, pady=5, sticky='n')
-        agent_button.config(state="normal")
-    else:
-        ute_ca_button = tk.Button(search_frame, text="UTE_CA", command=lambda: ssh_connect(vm))
-        ute_ca_button.grid(row=2, column=3, padx=5, pady=5, sticky='n')
-        ute_ca_button.config(state="disabled")
-        agent_button = tk.Button(search_frame, text="AGENT_GVE_COMMON", command=lambda: ssh_connect(vm))
-        agent_button.grid(row=2, column=4, padx=5, pady=5, sticky='n')
-        agent_button.config(state="disabled")
+
 
 search_button = tk.Button(search_frame, text="Cauta", command=search)
 search_button.grid(row=0, column=2, padx=5, pady=5, sticky='n')
