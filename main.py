@@ -13,7 +13,6 @@ window = tk.Tk()
 window.title("Task3")
 window.geometry("700x400")
 
-
 # Search bar and search button
 search_frame = tk.Frame(window)
 search_frame.pack(side=tk.TOP, fill=tk.X)
@@ -55,22 +54,10 @@ def search():
 
             # SSH button for the VM
             ssh_button = tk.Button(data_frame, text=" Connect SSH", command=lambda: ssh_connect(vm))
-            ssh_button.pack(pady=10)
-            if sshConnection == True:
-                ute_ca_button = tk.Button(data_frame, text="UTE_CA", command=lambda: ssh_connect(vm))
-                ute_ca_button.pack(pady=10)
-                ute_ca_button.config(state="normal")
-                agent_button = tk.Button(data_frame, text="AGENT_GVE_COMMON", command=lambda: ssh_connect(vm))
-                agent_button.pack(pady=10)
-                agent_button.config(state="normal")
-            else:
-                ute_ca_button = tk.Button(data_frame, text="UTE_CA", command=lambda: ssh_connect(vm))
-                ute_ca_button.pack(pady=10)
-                ute_ca_button.config(state="disabled")
-                agent_button = tk.Button(data_frame, text="AGENT_GVE_COMMON", command=lambda: ssh_connect(vm))
-                agent_button.pack(pady=10)
-                agent_button.config(state="disabled")
-
+            ssh_button.pack(pady=5)
+            agent_buttons()
+            disable_buttons(data_frame)
+    ssh_status_label.config(text="")
     search_not_found(found,nume)
 
 def search_not_found(found,nume):
@@ -83,36 +70,47 @@ def clear_frame(frame):
     for widget in frame.winfo_children():
         widget.destroy()
 
-sshConnection = False
+def agent_buttons():
+    ute_ca_button = tk.Button(data_frame, text="UTE_CA")
+    ute_ca_button.pack(pady=5)
+    agent_button = tk.Button(data_frame, text="AGENT_GVE_COMMON")
+    agent_button.pack(pady=5)
+
+def disable_buttons(frame):
+    for widget in frame.winfo_children():
+        if isinstance(widget, tk.Button) and widget["text"] == "UTE_CA" or widget["text"] == "AGENT_GVE_COMMON":
+            widget["state"] = "disabled"
+
+def destroy_buttons(frame):
+    for widget in frame.winfo_children():
+        if isinstance(widget, tk.Button) and widget["text"] == "UTE_CA" or widget["text"] == "AGENT_GVE_COMMON":
+            widget.destroy()
 
 def ssh_connect(vm):
     # SSH client object
-
-    sshConnection = False
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     try:
         ssh.connect(hostname=vm, username=USERNAME, password=PASSWORD)
         ssh_status_label.config(text=f"Conexiune SSH reusita pentru {vm}", fg="green")
-        sshConnection = True
+        destroy_buttons(data_frame)
+        agent_buttons()
         ssh.close()
-
     except paramiko.AuthenticationException:
         # Displays an authentication error:
         print("Eroare de autentificare. Verifica username-ul si parola.")
         ssh_status_label.config(text=f"Conexiune esuata pentru {vm}. Verifica username-ul si parola.", fg="red")
-        sshConnection = False
+        disable_buttons(data_frame)
     except paramiko.SSHException:
         # Displays any other SSH-related error:
         print("Eroare SSH. Verifica conexiunea la retea.")
         ssh_status_label.config(text=f"Conexiune esuata pentru {vm}. Verifica conexiunea la retea.", fg="red")
-        sshConnection = False
+        disable_buttons(data_frame)
     except Exception as e:
         # Displays any other error:
         print("Unexpected error:", e)
         ssh_status_label.config(text=f"Conexiune esuata pentru {vm}. Unexpected error {e}.", fg="red")
-        sshConnection = False
-
+        disable_buttons(data_frame)
 
 search_button = tk.Button(search_frame, text="Cauta", command=search)
 search_button.grid(row=0, column=2, padx=5, pady=5, sticky='n')
