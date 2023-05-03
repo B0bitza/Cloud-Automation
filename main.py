@@ -95,7 +95,11 @@ def ssh_connect(vm):
         ssh_status_label.config(text=f"Conexiune SSH reusita pentru {vm}", fg="green")
         destroy_buttons(data_frame)
         agent_buttons()
-        ssh.close()
+        while True:
+            user_input = input("Enter a value (enter 'q' to quit): ")
+            if user_input == 'q':
+                ssh.close()
+                break
     except paramiko.AuthenticationException:
         # Displays an authentication error:
         print("Eroare de autentificare. Verifica username-ul si parola.")
