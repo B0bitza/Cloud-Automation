@@ -76,15 +76,16 @@ def agent_buttons():
     agent_button = tk.Button(data_frame, text="AGENT_GVE_COMMON")
     agent_button.pack(pady=5)
 
+def enable_buttons(frame):
+    for widget in frame.winfo_children():
+        if isinstance(widget, tk.Button) and widget["text"] == "UTE_CA" or widget["text"] == "AGENT_GVE_COMMON":
+            widget["state"] = "normal"
+
 def disable_buttons(frame):
     for widget in frame.winfo_children():
         if isinstance(widget, tk.Button) and widget["text"] == "UTE_CA" or widget["text"] == "AGENT_GVE_COMMON":
             widget["state"] = "disabled"
 
-def destroy_buttons(frame):
-    for widget in frame.winfo_children():
-        if isinstance(widget, tk.Button) and widget["text"] == "UTE_CA" or widget["text"] == "AGENT_GVE_COMMON":
-            widget.destroy()
 
 def ssh_connect(vm):
     # SSH client object
@@ -93,12 +94,13 @@ def ssh_connect(vm):
     try:
         ssh.connect(hostname=vm, username=USERNAME, password=PASSWORD)
         ssh_status_label.config(text=f"Conexiune SSH reusita pentru {vm}", fg="green")
-        destroy_buttons(data_frame)
-        agent_buttons()
+        enable_buttons(data_frame)
         while True:
             user_input = input("Enter a value (enter 'q' to quit): ")
             if user_input == 'q':
                 ssh.close()
+                disable_buttons(data_frame)
+                ssh_status_label.config(text=f"Conexiune SSH s-a inchis pentru {vm}", fg="red")
                 break
     except paramiko.AuthenticationException:
         # Displays an authentication error:
