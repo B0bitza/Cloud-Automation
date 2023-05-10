@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 import openpyxl
 import paramiko
+import threading
 
 USERNAME = "user" # credidentiale temporare
 PASSWORD = "parola"
@@ -26,6 +27,7 @@ search_bar.grid(row=0, column=1, padx=5, pady=5, sticky='n')
 def search():
     nume = search_bar.get()
     found = False
+    clear_frame(data_frame)
     for row in range(1, worksheet.max_row + 1):
         if worksheet.cell(row=row, column=1).value == nume:
             found = True
@@ -33,9 +35,6 @@ def search():
             owner = worksheet.cell(row=row, column=3).value
             vm = worksheet.cell(row=row, column=4).value
             Mplane = worksheet.cell(row=row, column=5).value
-
-            # Clear previous search results
-            clear_frame(data_frame)
 
             nume_label = tk.Label(data_frame, text=f"Name: {nume}")
             nume_label.pack()
@@ -53,10 +52,10 @@ def search():
             Mplane_label.pack()
 
             # SSH button for the VM
-            ssh_button = tk.Button(data_frame, text=" Connect SSH", command=lambda: ssh_connect(vm))
+            ssh_button = tk.Button(data_frame, text=" Connect SSH", command=lambda vm=vm: connect_ssh_thread(vm))
             ssh_button.pack(pady=5)
-            agent_buttons()
-            disable_buttons(data_frame)
+            agent_buttons(vm)
+            disable_buttons(data_frame, vm)
     ssh_status_label.config(text="")
     search_not_found(found,nume)
 
@@ -70,22 +69,25 @@ def clear_frame(frame):
     for widget in frame.winfo_children():
         widget.destroy()
 
-def agent_buttons():
-    ute_ca_button = tk.Button(data_frame, text="UTE_CA")
+def agent_buttons(vm):
+    ute_ca_button = tk.Button(data_frame, text=f"UTE_CA - {vm}")
     ute_ca_button.pack(pady=5)
-    agent_button = tk.Button(data_frame, text="AGENT_GVE_COMMON")
+    agent_button = tk.Button(data_frame, text=f"AGENT_GVE_COMMON - {vm}")
     agent_button.pack(pady=5)
 
-def enable_buttons(frame):
+def enable_buttons(frame, vm):
     for widget in frame.winfo_children():
-        if isinstance(widget, tk.Button) and widget["text"] == "UTE_CA" or widget["text"] == "AGENT_GVE_COMMON":
+        if isinstance(widget, tk.Button) and widget["text"] == f"UTE_CA - {vm}" or widget["text"] == "AGENT_GVE_COMMON - {vm}":
             widget["state"] = "normal"
 
-def disable_buttons(frame):
+def disable_buttons(frame, vm):
     for widget in frame.winfo_children():
-        if isinstance(widget, tk.Button) and widget["text"] == "UTE_CA" or widget["text"] == "AGENT_GVE_COMMON":
+        if isinstance(widget, tk.Button) and widget["text"] == f"UTE_CA - {vm}" or widget["text"] == f"AGENT_GVE_COMMON - {vm}":
             widget["state"] = "disabled"
 
+def connect_ssh_thread(vm):
+    thread = threading.Thread(target=ssh_connect, args=(vm,))
+    thread.start()
 
 def ssh_connect(vm):
     # SSH client object
@@ -94,29 +96,29 @@ def ssh_connect(vm):
     try:
         ssh.connect(hostname=vm, username=USERNAME, password=PASSWORD)
         ssh_status_label.config(text=f"Conexiune SSH reusita pentru {vm}", fg="green")
-        enable_buttons(data_frame)
+        enable_buttons(data_frame, vm)
         while True:
             user_input = input("Enter a value (enter 'q' to quit): ")
             if user_input == 'q':
                 ssh.close()
-                disable_buttons(data_frame)
+                disable_buttons(data_frame, vm)
                 ssh_status_label.config(text=f"Conexiune SSH s-a inchis pentru {vm}", fg="red")
                 break
     except paramiko.AuthenticationException:
         # Displays an authentication error:
         print("Eroare de autentificare. Verifica username-ul si parola.")
         ssh_status_label.config(text=f"Conexiune esuata pentru {vm}. Verifica username-ul si parola.", fg="red")
-        disable_buttons(data_frame)
+        disable_buttons(data_frame, vm)
     except paramiko.SSHException:
         # Displays any other SSH-related error:
         print("Eroare SSH. Verifica conexiunea la retea.")
         ssh_status_label.config(text=f"Conexiune esuata pentru {vm}. Verifica conexiunea la retea.", fg="red")
-        disable_buttons(data_frame)
+        disable_buttons(data_frame, vm)
     except Exception as e:
         # Displays any other error:
         print("Unexpected error:", e)
         ssh_status_label.config(text=f"Conexiune esuata pentru {vm}. Unexpected error {e}.", fg="red")
-        disable_buttons(data_frame)
+        disable_buttons(data_frame, vm)
 
 search_button = tk.Button(search_frame, text="Cauta", command=search)
 search_button.grid(row=0, column=2, padx=5, pady=5, sticky='n')
