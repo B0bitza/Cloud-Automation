@@ -76,11 +76,15 @@ def agent_buttons(vm):
     agent_gve_common_button(vm)
 
 def ute_ca_button(vm):
-    ute_ca_button = tk.Button(data_frame, text=f"UTE_CA - {vm}")
+    with open('agent_ute-ca.json', 'r') as f:
+        data = json.load(f)
+    ute_ca_button = tk.Button(data_frame, text=f"UTE_CA - {vm}", command=lambda: [os.system(f'sshpass -p {PASSWORD} ssh {USERNAME}@{vm} "{cmd}"') for cmd in data])
     ute_ca_button.pack(pady=5)
 
 def agent_gve_common_button(vm):
-    agent_gve_common_button = tk.Button(data_frame, text=f"AGENT_GVE_COMMON - {vm}")
+    with open('agent_gve_common.json', 'r') as f:
+        data = json.load(f)
+    agent_gve_common_button = tk.Button(data_frame, text=f"AGENT_GVE_COMMON - {vm}", command=lambda: [os.system(f'sshpass -p {PASSWORD} ssh {USERNAME}@{vm} "{cmd}"') for cmd in data])
     agent_gve_common_button.pack(pady=5)
 
 def enable_buttons(frame, vm):
@@ -106,7 +110,7 @@ def ssh_connect(vm):
         ssh_status_label.config(text=f"Conexiune SSH reusita pentru {vm}", fg="green")
         enable_buttons(data_frame, vm)
         while True:
-            user_input = input("Enter a value (enter 'q' to quit): ")
+            user_input = input("Enter a value (enter 'q' to quit):\n")
             if user_input == 'q':
                 ssh.close()
                 disable_buttons(data_frame, vm)
