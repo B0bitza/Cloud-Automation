@@ -3,6 +3,8 @@ from tkinter import ttk
 import openpyxl
 import paramiko
 import threading
+import json
+import os
 
 USERNAME = "user" # credidentiale temporare
 PASSWORD = "parola"
@@ -70,14 +72,20 @@ def clear_frame(frame):
         widget.destroy()
 
 def agent_buttons(vm):
+    ute_ca_button(vm)
+    agent_gve_common_button(vm)
+
+def ute_ca_button(vm):
     ute_ca_button = tk.Button(data_frame, text=f"UTE_CA - {vm}")
     ute_ca_button.pack(pady=5)
-    agent_button = tk.Button(data_frame, text=f"AGENT_GVE_COMMON - {vm}")
-    agent_button.pack(pady=5)
+
+def agent_gve_common_button(vm):
+    agent_gve_common_button = tk.Button(data_frame, text=f"AGENT_GVE_COMMON - {vm}")
+    agent_gve_common_button.pack(pady=5)
 
 def enable_buttons(frame, vm):
     for widget in frame.winfo_children():
-        if isinstance(widget, tk.Button) and widget["text"] == f"UTE_CA - {vm}" or widget["text"] == "AGENT_GVE_COMMON - {vm}":
+        if isinstance(widget, tk.Button) and widget["text"] == f"UTE_CA - {vm}" or widget["text"] == f"AGENT_GVE_COMMON - {vm}":
             widget["state"] = "normal"
 
 def disable_buttons(frame, vm):
