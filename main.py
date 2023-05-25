@@ -9,11 +9,11 @@ import os
 USERNAME = "user" # credidentiale temporare
 PASSWORD = "parola"
 
-workbook = openpyxl.load_workbook('task3.xlsx')
+workbook = openpyxl.load_workbook('vms.xlsx')
 worksheet = workbook['Sheet1']
 
 window = tk.Tk()
-window.title("Task3")
+window.title("Agent install")
 window.geometry("700x400")
 
 # Search bar and search button
@@ -54,7 +54,7 @@ def search():
             Mplane_label.pack()
 
             # SSH button for the VM
-            ssh_button = tk.Button(data_frame, text=" Connect SSH", command=lambda vm=vm: connect_ssh_thread(vm))
+            ssh_button = tk.Button(data_frame, text="Connect SSH", command=lambda vm=vm: connect_ssh_thread(vm))
             ssh_button.pack(pady=5)
             agent_buttons(vm)
             disable_buttons(data_frame, vm)
@@ -76,11 +76,15 @@ def agent_buttons(vm):
     agent_gve_common_button(vm)
 
 def ute_ca_button(vm):
-    ute_ca_button = tk.Button(data_frame, text=f"UTE_CA - {vm}")
+    with open('agent_ute-ca.json', 'r') as f:
+        data = json.load(f)
+    ute_ca_button = tk.Button(data_frame, text=f"UTE_CA - {vm}", command=lambda: [os.system(f'sshpass -p {PASSWORD} ssh {USERNAME}@{vm} "{cmd}"') for cmd in data])
     ute_ca_button.pack(pady=5)
 
 def agent_gve_common_button(vm):
-    agent_gve_common_button = tk.Button(data_frame, text=f"AGENT_GVE_COMMON - {vm}")
+    with open('agent_gve_common.json', 'r') as f:
+        data = json.load(f)
+    agent_gve_common_button = tk.Button(data_frame, text=f"AGENT_GVE_COMMON - {vm}", command=lambda: [os.system(f'sshpass -p {PASSWORD} ssh {USERNAME}@{vm} "{cmd}"') for cmd in data])
     agent_gve_common_button.pack(pady=5)
 
 def enable_buttons(frame, vm):
@@ -105,13 +109,16 @@ def ssh_connect(vm):
         ssh.connect(hostname=vm, username=USERNAME, password=PASSWORD)
         ssh_status_label.config(text=f"Conexiune SSH reusita pentru {vm}", fg="green")
         enable_buttons(data_frame, vm)
-        while True:
-            user_input = input("Enter a value (enter 'q' to quit): ")
-            if user_input == 'q':
-                ssh.close()
-                disable_buttons(data_frame, vm)
-                ssh_status_label.config(text=f"Conexiune SSH s-a inchis pentru {vm}", fg="red")
-                break
+        quit_button = tk.Button(window, text="Quit SSH", command=lambda: quit_ssh(ssh, vm))
+        quit_button.pack(pady=5,side=tk.RIGHT, anchor=tk.CENTER)
+        first_ssh_button = tk.Button(window, text="First SSH", command=lambda: os.system(f'ssh-keyscan -H {vm} >> ~/.ssh/known_hosts && ssh {USERNAME}@{vm} echo "Conexiune SSH reusita"'))
+        first_ssh_button.pack(pady=5,side=tk.RIGHT, anchor=tk.CENTER)
+        def quit_ssh(ssh, vm):
+            ssh.close()
+            ssh_status_label.config(text=f"Conexiune SSH inchisa pentru {vm}", fg="red")
+            disable_buttons(data_frame, vm)
+            first_ssh_button.destroy()
+            quit_button.destroy()
     except paramiko.AuthenticationException:
         # Displays an authentication error:
         print("Eroare de autentificare. Verifica username-ul si parola.")
@@ -131,8 +138,11 @@ def ssh_connect(vm):
 search_button = tk.Button(search_frame, text="Cauta", command=search)
 search_button.grid(row=0, column=2, padx=5, pady=5, sticky='n')
 
+first_ssh_label = tk.Label(search_frame, text="Folositi butonul First SSH doar la prima conectare la un VM!", fg="red")
+first_ssh_label.grid(row=1, columnspan=3, padx=5, pady=5, sticky='n')
+
 ssh_status_label = tk.Label(search_frame, text="")
-ssh_status_label.grid(row=1, columnspan=3, padx=5, pady=5, sticky='n')
+ssh_status_label.grid(row=2, columnspan=3, padx=5, pady=5, sticky='n')
 
 search_frame.columnconfigure(1, weight=1)
 
